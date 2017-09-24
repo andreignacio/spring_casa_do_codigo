@@ -1,5 +1,6 @@
 package br.com.casadocodigo.loja.models;
 
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 
@@ -32,7 +33,7 @@ public class Produto {
 	
 	
 	@ElementCollection
-	private List<Preco> precos;
+	private List<Preco> precos = new ArrayList<>();;
 	
 	private String sumarioPath;
 	

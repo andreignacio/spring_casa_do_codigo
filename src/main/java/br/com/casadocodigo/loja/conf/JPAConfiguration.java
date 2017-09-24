@@ -3,8 +3,10 @@ package br.com.casadocodigo.loja.conf;
 import java.util.Properties;
 
 import javax.persistence.EntityManagerFactory;
+import javax.sql.DataSource;
 
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Profile;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
 import org.springframework.orm.jpa.JpaTransactionManager;
 import org.springframework.orm.jpa.JpaVendorAdapter;
@@ -20,39 +22,40 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 public class JPAConfiguration {
 	
 	@Bean
-	public LocalContainerEntityManagerFactoryBean entityManagerFactory() {
+	public LocalContainerEntityManagerFactoryBean entityManagerFactory(DataSource dataSource) {
 		
-		LocalContainerEntityManagerFactoryBean factoryBean = new LocalContainerEntityManagerFactoryBean(); 
-		// Interface vendor adapter implemntada pela classe HibernateJpaVendorAdapter
-		JpaVendorAdapter vendorAdapter = new HibernateJpaVendorAdapter();
+		LocalContainerEntityManagerFactoryBean factoryBean = new LocalContainerEntityManagerFactoryBean();
+	    JpaVendorAdapter vendorAdapter = new HibernateJpaVendorAdapter();
+
+	    factoryBean.setJpaVendorAdapter(vendorAdapter);
+	    factoryBean.setDataSource(dataSource);
+
+	    Properties props = aditionalProperties();
+
+	    factoryBean.setJpaProperties(props);
+	    factoryBean.setPackagesToScan("br.com.casadocodigo.loja.models");
+
+	    return factoryBean;
 		
-		// Qual versao do JPA estamos usando, ou a implemantação
-		factoryBean.setJpaVendorAdapter(vendorAdapter);
-		
-		DriverManagerDataSource dataSource = new DriverManagerDataSource();
-		dataSource.setUsername("root");
-		dataSource.setPassword("root");
-		dataSource.setUrl("jdbc:mysql://localhost:3306/casadocodigo");
-		dataSource.setDriverClassName("com.mysql.jdbc.Driver");
-		
-		factoryBean.setDataSource(dataSource);
-		
-		Properties properties = new Properties();
-		// Dialeto MySQL
-		properties.setProperty("hibernate.dialect", "org.hibernate.dialect.MySQL5Dialect");
-		// Mostrar o SQL no console
-		properties.setProperty("hibernate.show_sql", "true");
-		// Mapeamento do banco de dados, auto toda vez que mudar o modelo, o hibernate muda automaticamente
-		properties.setProperty("hibernate.hbm2ddl.auto", "update");
-		// Seta a propriedade ao factory
-		factoryBean.setJpaProperties(properties);
-		
-		// Definir onde estao as entidades que quando forem alteradas, ele autmaticamente auterar como esta 
-		// na propriedade hibernate.hbm2ddl.auto
-		factoryBean.setPackagesToScan("br.com.casadocodigo.loja.models");
-		
-		return factoryBean;
-		
+	}
+	
+	@Bean
+	@Profile("dev")
+	public DataSource dataSource(){
+	    DriverManagerDataSource dataSource = new DriverManagerDataSource();
+	    dataSource.setUsername("root");
+	    dataSource.setPassword("root");
+	    dataSource.setUrl("jdbc:mysql://localhost:3306/casadocodigo");
+	    dataSource.setDriverClassName("com.mysql.jdbc.Driver");
+	    return dataSource;
+	}
+	
+	private Properties aditionalProperties(){
+	    Properties props = new Properties();
+	    props.setProperty("hibernate.dialect", "org.hibernate.dialect.MySQL5Dialect");
+	    props.setProperty("hibernate.show_sql", "true");
+	    props.setProperty("hibernate.hbm2ddl.auto", "update");
+	    return props;
 	}
 	
 	// Esse metodo cria e que cuida da transacao, ele é um PlatformTransactionManagar, existem varios dessas classes
